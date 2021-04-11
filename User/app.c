@@ -5,15 +5,17 @@
  *      Author: waltor
  */
 
-#include <stdio.h>
-
 #include "FreeRTOS.h"
 #include "task.h"
 
 #include "main.h"
 
-void vMainTask(void *argument)
+void vMainTask(void *pvArgs)
 {
+	main_task_args* args = (main_task_args*)pvArgs;
+
+
+
 	while(1)
 	{
 		HAL_GPIO_WritePin(LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
@@ -22,7 +24,6 @@ void vMainTask(void *argument)
 		HAL_GPIO_WritePin(LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
 		HAL_GPIO_WritePin(LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_RESET);
 		vTaskDelay(1000);
-		printf("Hello World!\n");
 	}
 }
 

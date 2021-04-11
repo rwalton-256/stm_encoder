@@ -5,7 +5,5 @@
  */
 
 
-void setup_spi()
-{
 
-}
+

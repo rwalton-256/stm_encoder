@@ -59,6 +59,12 @@ void Error_Handler(void);
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
+typedef struct main_task_args
+{
+	CAN_HandleTypeDef* pxCAN_Hdl;
+	SPI_HandleTypeDef* pxSPI_Hdl;
+};
+
 #define GRN_LED_Pin GPIO_PIN_0
 #define RED_LED_Pin GPIO_PIN_1
 #define LED_GPIO_Port GPIOA
