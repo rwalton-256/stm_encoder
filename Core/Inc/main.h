@@ -58,15 +58,19 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define GRN_LED_Pin GPIO_PIN_0
+#define GRN_LED_GPIO_Port GPIOA
+#define RED_LED_Pin GPIO_PIN_1
+#define RED_LED_GPIO_Port GPIOA
+#define ENC_SPI_SEL_Pin GPIO_PIN_4
+#define ENC_SPI_SEL_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
-typedef struct main_task_args
+typedef struct
 {
 	CAN_HandleTypeDef* pxCAN_Hdl;
 	SPI_HandleTypeDef* pxSPI_Hdl;
-};
+} main_task_args;
 
-#define GRN_LED_Pin GPIO_PIN_0
-#define RED_LED_Pin GPIO_PIN_1
 #define LED_GPIO_Port GPIOA
 /* USER CODE END Private defines */
 
