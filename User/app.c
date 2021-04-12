@@ -9,11 +9,20 @@
 #include "task.h"
 
 #include "main.h"
+#include "encoder_communication.h"
 
 void vMainTask(void *pvArgs)
 {
 	main_task_args* args = (main_task_args*)pvArgs;
 
+	TaskHandle_t pxAnglePollTaskHndl;
+
+	xTaskCreate( vAnglePollTask,
+			     "vAnglePollTask",
+				 64,
+				 args->pxSPI_Hdl,
+				 3,
+				 &pxAnglePollTaskHndl );
 
 
 	while(1)
