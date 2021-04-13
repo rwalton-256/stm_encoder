@@ -52,7 +52,7 @@ typedef enum
 	EncoderAddr_ANGLEUNC = 0x3FFE,
 	EncoderAddr_ANGLECOM = 0x3FFF
 } EncoderAddr_t;
-
+#if 0
 HAL_StatusTypeDef xSendMsg( SPI_HandleTypeDef* pxHSPI, uint16_t msg )
 {
 	// Clear top bit
@@ -150,3 +150,69 @@ void vAnglePollTask( void* pvParameters )
 		vTaskDelay( 500 );
 	}
 }
+#else
+void vAnglePollTask( void* pvParameters )
+{
+	uint16_t data_max = 0, data_min = 0x3fff;
+
+	while( 1 )
+	{
+
+		HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_RESET);
+
+		vTaskDelay( 1 );
+
+		volatile uint16_t rx_data = 0, tx_data = EncoderAddr_ANGLEUNC | 0x4000;
+
+		for( uint8_t i=0; i<16; i++ )
+		{
+
+			// CLK rising edge
+
+			HAL_GPIO_WritePin(CLK_GPIO_Port, CLK_Pin, GPIO_PIN_SET);
+
+			// Write
+
+			if( tx_data >> 15 )
+			{
+				HAL_GPIO_WritePin(MOSI_GPIO_Port, MOSI_Pin, GPIO_PIN_SET);
+			}
+			else
+			{
+				HAL_GPIO_WritePin(MOSI_GPIO_Port, MOSI_Pin, GPIO_PIN_RESET);
+			}
+			tx_data = tx_data << 1;
+			vTaskDelay(1);
+
+			// CLK falling edge
+
+			HAL_GPIO_WritePin(CLK_GPIO_Port, CLK_Pin, GPIO_PIN_RESET);
+
+			// Read
+			rx_data = rx_data << 1;
+			if( HAL_GPIO_ReadPin(MISO_GPIO_Port, MISO_Pin) == GPIO_PIN_SET )
+			{
+				rx_data |= 1;
+			}
+
+			vTaskDelay(1);
+
+		}
+
+		HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_SET);
+
+		rx_data &= 0x3fff;
+
+		if( rx_data < data_min )
+			data_min = rx_data;
+		if( rx_data > data_max )
+			data_max = rx_data;
+
+		HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
+
+		vTaskDelay( (uint32_t)rx_data * 10 / 0x3fff );
+
+		HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
+	}
+}
+#endif

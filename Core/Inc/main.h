@@ -64,11 +64,17 @@ void Error_Handler(void);
 #define RED_LED_GPIO_Port GPIOA
 #define ENC_SPI_SEL_Pin GPIO_PIN_4
 #define ENC_SPI_SEL_GPIO_Port GPIOA
+#define CLK_Pin GPIO_PIN_5
+#define CLK_GPIO_Port GPIOA
+#define MISO_Pin GPIO_PIN_6
+#define MISO_GPIO_Port GPIOA
+#define MOSI_Pin GPIO_PIN_7
+#define MOSI_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 typedef struct
 {
 	CAN_HandleTypeDef* pxCAN_Hdl;
-	SPI_HandleTypeDef* pxSPI_Hdl;
+//	SPI_HandleTypeDef* pxSPI_Hdl;
 } main_task_args;
 
 #define LED_GPIO_Port GPIOA
