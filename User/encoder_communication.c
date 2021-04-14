@@ -4,10 +4,9 @@
  * 4/10/2021
  */
 
-#include "FreeRTOS.h"
-#include "task.h"
-
 #include "main.h"
+
+#include "encoder_communication.h"
 
 // Returns true if there is an even number
 // of '1's in bits 15:0
@@ -32,26 +31,8 @@
       ( data & 0x4000 ) +  \
       ( data & 0x8000 )    \
     ) % 2                  \
-  ) ? 1 : 0                \
+  ) ? 0 : 1                \
 )
-
-typedef enum
-{
-	// Volatile
-	EncoderAddr_NOP = 0x0000,
-	EncoderAddr_ERRFL = 0x0001,
-	EncoderAddr_PROG = 0x0003,
-	// Non-Volatile
-	EncoderAddr_ZPOSM = 0x0016,
-	EncoderAddr_ZPOSL = 0x0017,
-	EncoderAddr_SETTINGS1 = 0x0018,
-	EncoderAddr_SETTINGS2 = 0x0019,
-	// Volatile
-	EncoderAddr_DIAAGC = 0x3FFC,
-	EncoderAddr_MAG = 0x3FFD,
-	EncoderAddr_ANGLEUNC = 0x3FFE,
-	EncoderAddr_ANGLECOM = 0x3FFF
-} EncoderAddr_t;
 
 HAL_StatusTypeDef xSendMsg( SPI_HandleTypeDef* pxHSPI, uint16_t msg )
 {
@@ -64,117 +45,78 @@ HAL_StatusTypeDef xSendMsg( SPI_HandleTypeDef* pxHSPI, uint16_t msg )
 		msg |= 0x8000;
 	}
 
-	return HAL_SPI_Transmit( pxHSPI, (uint8_t*)&msg, 1, 100 );
+	// Enable SPI chip select for the encoder UC
+	HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_RESET);
+
+	HAL_StatusTypeDef status;
+
+	status = HAL_SPI_Transmit( pxHSPI, (uint8_t*)&msg, 1, 100 );
+
+	// Reset SPI chip select
+	HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_SET);
+
+	return status;
 }
 
 HAL_StatusTypeDef xSendReceiveMsg( SPI_HandleTypeDef* pxHSPI, uint16_t txMsg, uint16_t* rxMsg )
 {
 	HAL_StatusTypeDef status;
 
-	volatile uint16_t foo = txMsg;
-
 	// Clear top bit
-	foo &= 0x7fff;
-	if( !CHECKSUM( foo ) )
+	txMsg &= 0x7fff;
+	if( !CHECKSUM( txMsg ) )
 	{
 		// Checksum failed, we need to set the checksum bit so the
 		// checksum will pass on the encoder uc
-		foo = foo | 0x8000;
+		txMsg |= 0x8000;
 	}
 
+	// Enable SPI chip select for the encoder UC
+	HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_RESET);
+
 	status = HAL_SPI_TransmitReceive( pxHSPI,
-			                          (uint8_t*)&foo,
+			                          (uint8_t*)&txMsg,
 									  (uint8_t*)rxMsg,
 									  1,
 									  100 );
 
-	if( *rxMsg & 0x4000 )
-	{
-		// Error bit of receive transmission high
-		status = HAL_ERROR;
-	}
-	else if( !CHECKSUM( *rxMsg ) )
-	{
-		// Checksum doesn't match
-		status = HAL_ERROR;
-	}
+	// Reset SPI chip select
+	HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_SET);
 	return status;
 }
 
 HAL_StatusTypeDef xReceiveMsg( SPI_HandleTypeDef* pxHSPI, uint16_t* rx_msg )
 {
-	HAL_StatusTypeDef status;
-	uint16_t tx_msg = EncoderAddr_NOP | 0x4000;
-	status = HAL_SPI_TransmitReceive( pxHSPI,
-			                          (uint8_t*)&tx_msg,
-			                          (uint8_t*)rx_msg,
-									  1,
-									  100 );
-
-	if( *rx_msg & 0x4000 )
-	{
-		// Error bit of receive transmission high
-		status = HAL_ERROR;
-	}
-	else if( !CHECKSUM( *rx_msg ) )
-	{
-		// Checksum doesn't match
-		status = HAL_ERROR;
-	}
-	return status;
+	return xSendReceiveMsg( pxHSPI, EncoderAddr_NOP | 0x4000, rx_msg );
 }
 
 uint16_t xEncRead( SPI_HandleTypeDef* pxHSPI , uint16_t addr )
 {
-	uint16_t ret;
+	uint16_t resp;
+	HAL_StatusTypeDef status;
 
-	// Enable SPI chip select for the encoder UC
-	HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_RESET);
+	status = xSendMsg( pxHSPI, addr | 0x4000 );
 
-	xSendReceiveMsg( pxHSPI, addr | 0x4000, &ret );
-	xSendReceiveMsg( pxHSPI, EncoderAddr_NOP | 0x4000, &ret );
-
-	// Reset SPI chip select
-	HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_SET);
-
-	return ret;
-}
-
-void vAnglePollTask( void* pvParameters )
-{
-	SPI_HandleTypeDef* pxHSPI= (SPI_HandleTypeDef*)pvParameters;
-	while( 1 )
+	if( status != HAL_OK )
 	{
-		uint16_t rx_msg = 0, tx_msg = EncoderAddr_ANGLEUNC | 0x4000;
-
-		HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_RESET);
-
-		HAL_SPI_TransmitReceive( pxHSPI,
-				                 (uint8_t*)&tx_msg,
-				                 (uint8_t*)&rx_msg,
-								 1,
-								 100 );
-
-		tx_msg = 0xc000;
-		HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_RESET);
-
-		HAL_SPI_TransmitReceive( pxHSPI,
-				                 (uint8_t*)&tx_msg,
-				                 (uint8_t*)&rx_msg,
-								 1,
-								 100 );
-
-		HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_SET);
-
-		rx_msg &= 0x3fff;
-
-		HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
-
-		vTaskDelay( (uint32_t)rx_msg * 10 / 0x3fff );
-
-		HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
-
-		vTaskDelay( ( 0x3fff - (uint32_t)rx_msg ) * 10 / 0x3fff );
+		// Error
 	}
+
+	status = xReceiveMsg( pxHSPI, &resp );
+
+	if( status != HAL_OK )
+	{
+		// Error
+	}
+
+	if( resp & 0x4000 )
+	{
+		// Error bit of receive transmission high
+	}
+	else if( !CHECKSUM( resp ) )
+	{
+		// Checksum doesn't match
+	}
+
+	return resp & 0x3fff;
 }
