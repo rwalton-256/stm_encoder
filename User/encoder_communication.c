@@ -132,7 +132,6 @@ uint16_t xEncRead( SPI_HandleTypeDef* pxHSPI , uint16_t addr )
 	HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_RESET);
 
 	xSendReceiveMsg( pxHSPI, addr | 0x4000, &ret );
-	vTaskDelay( 500 );
 	xSendReceiveMsg( pxHSPI, EncoderAddr_NOP | 0x4000, &ret );
 
 	// Reset SPI chip select
@@ -146,7 +145,36 @@ void vAnglePollTask( void* pvParameters )
 	SPI_HandleTypeDef* pxHSPI= (SPI_HandleTypeDef*)pvParameters;
 	while( 1 )
 	{
-		xEncRead( pxHSPI, EncoderAddr_DIAAGC );
-		vTaskDelay( 500 );
+		uint16_t rx_msg = 0, tx_msg = EncoderAddr_ANGLEUNC | 0x4000;
+
+		HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_RESET);
+
+		HAL_SPI_TransmitReceive( pxHSPI,
+				                 (uint8_t*)&tx_msg,
+				                 (uint8_t*)&rx_msg,
+								 1,
+								 100 );
+
+		tx_msg = 0xc000;
+		HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_RESET);
+
+		HAL_SPI_TransmitReceive( pxHSPI,
+				                 (uint8_t*)&tx_msg,
+				                 (uint8_t*)&rx_msg,
+								 1,
+								 100 );
+
+		HAL_GPIO_WritePin(ENC_SPI_SEL_GPIO_Port, ENC_SPI_SEL_Pin, GPIO_PIN_SET);
+
+		rx_msg &= 0x3fff;
+
+		HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
+
+		vTaskDelay( (uint32_t)rx_msg * 10 / 0x3fff );
+
+		HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
+
+		vTaskDelay( ( 0x3fff - (uint32_t)rx_msg ) * 10 / 0x3fff );
 	}
 }
