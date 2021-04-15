@@ -10,12 +10,13 @@
 
 #include "main.h"
 #include "angle_poll.h"
+#include "can_wrapper.h"
 
 void vMainTask(void *pvArgs)
 {
 	main_task_args* args = (main_task_args*)pvArgs;
 
-	TaskHandle_t pxAnglePollTaskHndl;
+	TaskHandle_t pxAnglePollTaskHndl, pxCanTaskHndl;
 
 	xTaskCreate( vAnglePollTask,
 			     "vAnglePollTask",
@@ -24,6 +25,12 @@ void vMainTask(void *pvArgs)
 				 3,
 				 &pxAnglePollTaskHndl );
 
+	xTaskCreate( vCanTask,
+			     "vCanTask",
+				 64,
+				 args->pxCAN_Hdl,
+				 3,
+				 &pxCanTaskHndl );
 
 	while(1)
 	{

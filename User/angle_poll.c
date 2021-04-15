@@ -10,8 +10,8 @@
 
 #include "main.h"
 
-#include "encoder_communication.h"
 #include "angle_poll.h"
+#include "encoder_com.h"
 
 // 50 ticks between angle sample
 #define ANGLE_POLL_DELAY 50

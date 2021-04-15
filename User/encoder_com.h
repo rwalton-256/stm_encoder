@@ -1,5 +1,7 @@
-#ifndef __ENCODER_COMMUNICATION_H
-#define __ENCODER_COMMUNICATION_H
+#ifndef __ENCODER_COM__
+#define __ENCODER_COM__
+
+#include "main.h"
 
 typedef enum
 {

@@ -4,9 +4,10 @@
  * 4/10/2021
  */
 
+#include "encoder_com.h"
+
 #include "main.h"
 
-#include "encoder_communication.h"
 
 // Returns true if there is an even number
 // of '1's in bits 15:0
