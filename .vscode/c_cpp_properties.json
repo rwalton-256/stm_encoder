@@ -1,0 +1,38 @@
+{
+    "configurations": [
+      {
+        "name": "Mac",
+        "intelliSenseMode": "linux-gcc-arm",
+        "includePath": [
+            "app/include/stm_encoder",
+            "lib/config/include/FreeRTOS",
+            "lib/config/include/STM32CubeF0",
+            "lib/FreeRTOS/FreeRTOS/Source/include",
+            "lib/FreeRTOS/FreeRTOS/Source/portable/GCC/ARM_CM0",
+            "lib/STM32CubeF0/Drivers/CMSIS/Core/Include",
+            "lib/STM32CubeF0/Drivers/CMSIS/Device/ST/STM32F0xx/Include",
+            "lib/STM32CubeF0/Drivers/STM32F0xx_HAL_Driver/Inc"
+        ],
+        "compilerPath": "/usr/bin/arm-none-eabi-gcc",
+        "cStandard": "c11",
+        "cppStandard": "c++17",
+        "compileCommands": "",
+        "defines": [
+          "STM32F042x6"
+        ],
+        "browse": {
+          "path": [
+              "app/src",
+              "lib/FreeRTOS/FreeRTOS/Source",
+              "lib/STM32CubeF0/Drivers/CMSIS/Device/ST/STM32F0xx/Source/Templates",
+              "lib/STM32CubeF0/Drivers/CMSIS/Device/ST/STM32F0xx/Source/Templates/gcc",
+              "lib/STM32CubeF0/Drivers/STM32F0xx_HAL_Driver/Src"
+          ],
+          "limitSymbolsToIncludedHeaders": true,
+          "databaseFilename": ""
+        }
+      }
+    ],
+    "version": 4
+  }
+  

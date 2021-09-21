@@ -6,9 +6,6 @@
 
 #include "encoder_com.h"
 
-#include "main.h"
-
-
 // Returns true if there is an even number
 // of '1's in bits 15:0
 #define CHECKSUM( data )   \

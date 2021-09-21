@@ -9,8 +9,6 @@
 #include "task.h"
 #include "queue.h"
 
-#include "main.h"
-
 #include "angle_poll.h"
 #include "encoder_com.h"
 #include "can_wrapper.h"
@@ -35,7 +33,7 @@ void vCanTask( void* pvParam )
 
 		uint32_t mailbox;
 
-		HAL_CAN_AddTxMessage( pxHCAN, &packet.header, packet.data, &mailbox );
+		HAL_CAN_AddTxMessage( pxHCAN, (CAN_TxHeaderTypeDef*) &packet.header, packet.data, &mailbox );
 	}
 
 	vTaskDelete( NULL );
@@ -109,6 +107,10 @@ void vCANRxCallback( CAN_HandleTypeDef* pxHCAN )
 	}
 }
 
+/**
+ * Sends message
+ * @param pxPacket
+ */
 void vSendCANMsg( CAN_Packet_t* pxPacket )
 {
 	BaseType_t ret;

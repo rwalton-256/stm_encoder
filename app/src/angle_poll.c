@@ -8,8 +8,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#include "main.h"
-
 #include "angle_poll.h"
 #include "encoder_com.h"
 

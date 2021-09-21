@@ -1,6 +1,8 @@
 #ifndef __CAN_WRAPPER__
 #define __CAN_WRAPPER__
 
+#include "main.h"
+
 typedef struct
 {
 	uint8_t data[8];
