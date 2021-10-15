@@ -2,3 +2,5 @@
 .mxproject
 Debug
 stm_encoder.map
+CMakeCache.txt
+CMakeFiles
